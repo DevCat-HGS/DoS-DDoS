@@ -29,7 +29,7 @@ def show_menu():
     
     options = [
         "1. Prueba de DoS (localhost o URL/IP externa)",
-        "2. Prueba de DDoS simulada (localhost o URL/IP externa)",
+        "2. Prueba de DDoS  (localhost o URL/IP externa)",
         "3. Información sobre ataques DoS/DDoS",
         "4. Recomendaciones para proteger tu aplicación web",
         "5. Generar informe de resistencia",
