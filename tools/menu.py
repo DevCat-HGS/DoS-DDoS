@@ -84,14 +84,22 @@ def run_dos_test():
         port = 80
     
     duration = 5
+    unlimited = False
     try:
-        duration = int(input(Fore.CYAN + "Ingresa la duración en segundos (por defecto 5, máximo 3600): " + Style.RESET_ALL) or "5")
-        if duration <= 0:
-            print(Fore.RED + "\n[!] La duración debe ser mayor que 0, usando 5 segundos" + Style.RESET_ALL)
-            duration = 5
-        elif duration > 3600:
-            print(Fore.YELLOW + "\n[!] Por seguridad, limitando la duración a 3600 segundos (1 hora)" + Style.RESET_ALL)
-            duration = 3600
+        duration_input = input(Fore.CYAN + "Ingresa la duración en segundos (por defecto 5, máximo 3600, 0 para ilimitado): " + Style.RESET_ALL) or "5"
+        if duration_input.lower() == "ilimitado" or duration_input == "0":
+            duration = 0
+            unlimited = True
+            print(Fore.RED + "\n[!] Has seleccionado modo ILIMITADO. El ataque continuará hasta que lo detengas manualmente." + Style.RESET_ALL)
+            print(Fore.RED + "[!] Presiona Ctrl+C para detener el ataque cuando desees finalizarlo." + Style.RESET_ALL)
+        else:
+            duration = int(duration_input)
+            if duration < 0:
+                print(Fore.RED + "\n[!] La duración debe ser mayor o igual a 0, usando 5 segundos" + Style.RESET_ALL)
+                duration = 5
+            elif duration > 3600 and not unlimited:
+                print(Fore.YELLOW + "\n[!] Por seguridad, limitando la duración a 3600 segundos (1 hora)" + Style.RESET_ALL)
+                duration = 3600
     except ValueError:
         print(Fore.RED + "\n[!] Duración inválida, usando 5 segundos" + Style.RESET_ALL)
         duration = 5
@@ -101,20 +109,30 @@ def run_dos_test():
     print(Fore.GREEN + "1. Baja (recomendado para pruebas iniciales)" + Style.RESET_ALL)
     print(Fore.YELLOW + "2. Media" + Style.RESET_ALL)
     print(Fore.RED + "3. Alta (puede afectar el rendimiento del sistema)" + Style.RESET_ALL)
+    print(Fore.RED + Fore.LIGHTRED_EX + "4. EXTREMA (máxima potencia, puede tumbar cualquier servidor)" + Style.RESET_ALL)
     
-    intensity_choice = input(Fore.CYAN + "Selecciona una opción [1-3]: " + Style.RESET_ALL) or "1"
+    intensity_choice = input(Fore.CYAN + "Selecciona una opción [1-4]: " + Style.RESET_ALL) or "1"
     intensity = "baja"
     if intensity_choice == "2":
         intensity = "media"
     elif intensity_choice == "3":
         intensity = "alta"
+    elif intensity_choice == "4":
+        intensity = "extrema"
+        print(Fore.RED + "\n[!] ADVERTENCIA: Has seleccionado la intensidad EXTREMA" + Style.RESET_ALL)
+        print(Fore.RED + "[!] Esta configuración está diseñada para tumbar cualquier servidor" + Style.RESET_ALL)
+        print(Fore.RED + "[!] Asegúrate de tener AUTORIZACIÓN EXPLÍCITA para realizar este ataque" + Style.RESET_ALL)
     
     # Verificar si el puerto está abierto antes de iniciar la prueba
     print(Fore.CYAN + "\n[*] Verificando si el puerto está abierto..." + Style.RESET_ALL)
     if check_port_open(host=target, port=port):
         print(Fore.GREEN + "\n[*] Iniciando prueba de DoS..." + Style.RESET_ALL)
+        if intensity == "extrema":
+            print(Fore.RED + "[!] MODO EXTREMO ACTIVADO: Este ataque está diseñado para tumbar cualquier servidor" + Style.RESET_ALL)
+        if unlimited:
+            print(Fore.RED + "[!] MODO ILIMITADO ACTIVADO: El ataque continuará hasta que lo detengas manualmente" + Style.RESET_ALL)
         # Ejecutar la prueba
-        dos_test(target=target, port=port, duration=duration, intensity=intensity)
+        dos_test(target=target, port=port, duration=duration, intensity=intensity, unlimited=unlimited)
     else:
         print(Fore.RED + "\n[!] No se puede realizar la prueba porque el puerto está cerrado" + Style.RESET_ALL)
         print(Fore.YELLOW + "[!] Asegúrate de que el objetivo esté en línea y el puerto especificado esté abierto" + Style.RESET_ALL)
@@ -155,14 +173,22 @@ def run_ddos_simulation():
         threads = 3
     
     duration = 5
+    unlimited = False
     try:
-        duration = int(input(Fore.CYAN + "Ingresa la duración en segundos (por defecto 5, máximo 3600): " + Style.RESET_ALL) or "5")
-        if duration <= 0:
-            print(Fore.RED + "\n[!] La duración debe ser mayor que 0, usando 5 segundos" + Style.RESET_ALL)
-            duration = 5
-        elif duration > 3600:
-            print(Fore.YELLOW + "\n[!] Por seguridad, limitando la duración a 3600 segundos (1 hora)" + Style.RESET_ALL)
-            duration = 3600
+        duration_input = input(Fore.CYAN + "Ingresa la duración en segundos (por defecto 5, máximo 3600, 0 para ilimitado): " + Style.RESET_ALL) or "5"
+        if duration_input.lower() == "ilimitado" or duration_input == "0":
+            duration = 0
+            unlimited = True
+            print(Fore.RED + "\n[!] Has seleccionado modo ILIMITADO. El ataque continuará hasta que lo detengas manualmente." + Style.RESET_ALL)
+            print(Fore.RED + "[!] Presiona Ctrl+C para detener el ataque cuando desees finalizarlo." + Style.RESET_ALL)
+        else:
+            duration = int(duration_input)
+            if duration < 0:
+                print(Fore.RED + "\n[!] La duración debe ser mayor o igual a 0, usando 5 segundos" + Style.RESET_ALL)
+                duration = 5
+            elif duration > 3600 and not unlimited:
+                print(Fore.YELLOW + "\n[!] Por seguridad, limitando la duración a 3600 segundos (1 hora)" + Style.RESET_ALL)
+                duration = 3600
     except ValueError:
         print(Fore.RED + "\n[!] Duración inválida, usando 5 segundos" + Style.RESET_ALL)
         duration = 5
@@ -172,20 +198,30 @@ def run_ddos_simulation():
     print(Fore.GREEN + "1. Baja (recomendado para pruebas iniciales)" + Style.RESET_ALL)
     print(Fore.YELLOW + "2. Media" + Style.RESET_ALL)
     print(Fore.RED + "3. Alta (puede afectar el rendimiento del sistema)" + Style.RESET_ALL)
+    print(Fore.RED + Fore.LIGHTRED_EX + "4. EXTREMA (máxima potencia, puede tumbar cualquier servidor)" + Style.RESET_ALL)
     
-    intensity_choice = input(Fore.CYAN + "Selecciona una opción [1-3]: " + Style.RESET_ALL) or "1"
+    intensity_choice = input(Fore.CYAN + "Selecciona una opción [1-4]: " + Style.RESET_ALL) or "1"
     intensity = "baja"
     if intensity_choice == "2":
         intensity = "media"
     elif intensity_choice == "3":
         intensity = "alta"
+    elif intensity_choice == "4":
+        intensity = "extrema"
+        print(Fore.RED + "\n[!] ADVERTENCIA: Has seleccionado la intensidad EXTREMA" + Style.RESET_ALL)
+        print(Fore.RED + "[!] Esta configuración está diseñada para tumbar cualquier servidor" + Style.RESET_ALL)
+        print(Fore.RED + "[!] Asegúrate de tener AUTORIZACIÓN EXPLÍCITA para realizar este ataque" + Style.RESET_ALL)
     
     # Verificar si el puerto está abierto antes de iniciar la simulación
     print(Fore.CYAN + "\n[*] Verificando si el puerto está abierto..." + Style.RESET_ALL)
     if check_port_open(host=target, port=port):
         print(Fore.GREEN + "\n[*] Iniciando simulación de DDoS..." + Style.RESET_ALL)
+        if intensity == "extrema":
+            print(Fore.RED + "[!] MODO EXTREMO ACTIVADO: Este ataque está diseñado para tumbar cualquier servidor" + Style.RESET_ALL)
+        if unlimited:
+            print(Fore.RED + "[!] MODO ILIMITADO ACTIVADO: El ataque continuará hasta que lo detengas manualmente" + Style.RESET_ALL)
         # Ejecutar la simulación
-        ddos_simulation(target=target, port=port, threads=threads, duration=duration, intensity=intensity)
+        ddos_simulation(target=target, port=port, threads=threads, duration=duration, intensity=intensity, unlimited=unlimited)
     else:
         print(Fore.RED + "\n[!] No se puede realizar la simulación porque el puerto está cerrado" + Style.RESET_ALL)
         print(Fore.YELLOW + "[!] Asegúrate de que el objetivo esté en línea y el puerto especificado esté abierto" + Style.RESET_ALL)

